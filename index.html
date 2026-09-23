@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>다크 달력 투두</title>
+
+  <!-- iOS 전용 전체 화면 및 아이콘 설정 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#000000">
+  <link rel="apple-touch-icon" href="icon.png">
+  <link rel="manifest" href="manifest.json">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- 오전 9시 뉴스 헤드라인 -->
+    <header class="news-card">
+      <div class="news-label">📰 오전 9시 뉴스 헤드라인</div>
+      <div id="news-text" class="news-text">뉴스를 불러오는 중...</div>
+    </header>
+
+    <!-- 달력 헤더 -->
+    <div class="calendar-header">
+      <button id="prev-month">&lt;</button>
+      <h2 id="calendar-title">2026년 9월</h2>
+      <button id="next-month">&gt;</button>
+    </div>
+
+    <!-- 2년 스와이프 달력 -->
+    <main id="calendar-box" class="calendar-box">
+      <div class="weekdays">
+        <span class="sun">일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span class="sat">토</span>
+      </div>
+      <div id="calendar-days" class="calendar-days"></div>
+    </main>
+
+    <!-- 투두리스트 섹션 -->
+    <section class="todo-card">
+      <h3 id="selected-date-title">날짜를 선택하세요</h3>
+      <div class="todo-input-box">
+        <input type="text" id="todo-input" placeholder="새로운 할 일 입력...">
+        <button id="add-btn">추가</button>
+      </div>
+      <ul id="todo-list" class="todo-list"></ul>
+    </section>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
