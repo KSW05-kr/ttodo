@@ -1,0 +1,164 @@
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+let currentDate = new Date();
+let selectedDateStr = formatDate(new Date());
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderCalendar();
+  initSwipe();
+  checkNewsUpdate();
+  selectDate(selectedDateStr);
+
+  document.getElementById('prev-month').addEventListener('click', prevMonth);
+  document.getElementById('next-month').addEventListener('click', nextMonth);
+  document.getElementById('add-btn').addEventListener('click', addTodo);
+});
+
+function formatDate(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function renderCalendar() {
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+
+  document.getElementById('calendar-title').textContent = `${year}년 ${month + 1}월`;
+
+  const daysContainer = document.getElementById('calendar-days');
+  daysContainer.innerHTML = '';
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const lastDate = new Date(year, month + 1, 0).getDate();
+  const todayStr = formatDate(new Date());
+
+  for (let i = 0; i < firstDay; i++) {
+    daysContainer.appendChild(document.createElement('div'));
+  }
+
+  for (let day = 1; day <= lastDate; day++) {
+    const dateStr = formatDate(new Date(year, month, day));
+    const cell = document.createElement('div');
+    cell.className = 'day-cell';
+    cell.innerHTML = `<span>${day}</span><div class="badge-area"></div>`;
+
+    if (dateStr === todayStr) cell.classList.add('today');
+
+    updateBadge(cell.querySelector('.badge-area'), dateStr);
+    cell.addEventListener('click', () => selectDate(dateStr));
+    daysContainer.appendChild(cell);
+  }
+}
+
+function updateBadge(badgeEl, dateStr) {
+  const todos = JSON.parse(localStorage.getItem('todo_' + dateStr) || '[]');
+  if (todos.length === 0) return;
+
+  const hasUnfinished = todos.some(t => !t.completed);
+  if (hasUnfinished) {
+    badgeEl.innerHTML = '<span class="red-triangle">▲</span>';
+  } else {
+    badgeEl.innerHTML = '<span class="green-circle">●</span>';
+  }
+}
+
+function initSwipe() {
+  const box = document.getElementById('calendar-box');
+  let startX = 0;
+
+  box.addEventListener('touchstart', (e) => {
+    startX = e.touches[0].clientX;
+  }, false);
+
+  box.addEventListener('touchend', (e) => {
+    const diffX = startX - e.changedTouches[0].clientX;
+    if (Math.abs(diffX) > 50) {
+      if (diffX > 0) nextMonth();
+      else prevMonth();
+    }
+  }, false);
+}
+
+function prevMonth() {
+  currentDate.setMonth(currentDate.getMonth() - 1);
+  renderCalendar();
+}
+
+function nextMonth() {
+  currentDate.setMonth(currentDate.getMonth() + 1);
+  renderCalendar();
+}
+
+function selectDate(dateStr) {
+  selectedDateStr = dateStr;
+  document.getElementById('selected-date-title').textContent = `📅 ${dateStr} 할 일`;
+  renderTodoList();
+}
+
+function renderTodoList() {
+  const listEl = document.getElementById('todo-list');
+  listEl.innerHTML = '';
+  const todos = JSON.parse(localStorage.getItem('todo_' + selectedDateStr) || '[]');
+
+  todos.forEach((todo, idx) => {
+    const li = document.createElement('li');
+    li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+    li.innerHTML = `
+      <span onclick="toggleTodo(${idx})">${todo.text}</span>
+      <button onclick="deleteTodo(${idx})" style="background:none;border:none;color:#ff453a;">✕</button>
+    `;
+    listEl.appendChild(li);
+  });
+
+  renderCalendar();
+}
+
+function addTodo() {
+  const input = document.getElementById('todo-input');
+  if (!input.value.trim()) return;
+
+  const todos = JSON.parse(localStorage.getItem('todo_' + selectedDateStr) || '[]');
+  todos.push({ text: input.value.trim(), completed: false });
+  localStorage.setItem('todo_' + selectedDateStr, JSON.stringify(todos));
+  input.value = '';
+  renderTodoList();
+}
+
+function toggleTodo(idx) {
+  const todos = JSON.parse(localStorage.getItem('todo_' + selectedDateStr) || '[]');
+  todos[idx].completed = !todos[idx].completed;
+  localStorage.setItem('todo_' + selectedDateStr, JSON.stringify(todos));
+  renderTodoList();
+}
+
+function deleteTodo(idx) {
+  const todos = JSON.parse(localStorage.getItem('todo_' + selectedDateStr) || '[]');
+  todos.splice(idx, 1);
+  localStorage.setItem('todo_' + selectedDateStr, JSON.stringify(todos));
+  renderTodoList();
+}
+
+function checkNewsUpdate() {
+  const lastTime = localStorage.getItem('last_news_time');
+  const now = new Date();
+  const todayNine = new Date();
+  todayNine.setHours(9, 0, 0, 0);
+
+  if (!lastTime || (new Date(lastTime) < todayNine && now >= todayNine)) {
+    const headlines = [
+      "오늘의 주요 기술 및 경제 소식이 새로 갱신되었습니다.",
+      "글로벌 최신 IT 트렌드 및 시황 분석 보고서",
+      "오늘 오전 9시 기준 주요 헤드라인 리포트"
+    ];
+    const picked = headlines[Math.floor(Math.random() * headlines.length)];
+    document.getElementById('news-text').textContent = picked;
+    localStorage.setItem('saved_news', picked);
+    localStorage.setItem('last_news_time', now.toISOString());
+  } else {
+    document.getElementById('news-text').textContent = localStorage.getItem('saved_news') || "최신 뉴스 상태 유지 중";
+  }
+}
